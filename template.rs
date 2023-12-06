@@ -4,10 +4,10 @@ fn main() {
     println!("{:?}", part2(input));
 }
 
-fn part1(s: &str) -> () {
+fn part1(input: &str) -> Option<()> {
     todo!()
 }
 
-fn part2(s: &str) -> () {
+fn part2(input: &str) -> Option<()> {
     todo!()
 }
