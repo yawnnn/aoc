@@ -1,7 +1,7 @@
 fn main() {
     let input = include_str!("input1.txt");
     println!("{:?}", part1(input));
-    //println!("{:?}", part2(input));
+    println!("{:?}", part2(input));
 }
 
 fn part1(input: &str) -> u32 {
@@ -30,6 +30,21 @@ fn part1(input: &str) -> u32 {
     good_lines
 }
 
-fn part2(input: &str) -> Option<()> {
-    todo!()
+fn part2(input: &str) -> u32 {
+    let mut good_lines = 0;
+
+    for line in input.lines() {
+        let cond1 = line.chars()
+            .zip(line.chars().skip(2))
+            .any(|(c1, c2)| c1 == c2);
+
+        let cond2 = line.char_indices()
+            .take(line.len() - 2)
+            .any(|(p, _)| line[p+2..].contains(&line[p..p+2]));
+
+        if cond1 && cond2 {
+            good_lines += 1;
+        }
+    }
+    good_lines
 }
