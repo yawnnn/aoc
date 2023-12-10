@@ -18,7 +18,7 @@ impl<'a> Schematic<'a> {
         if !input.is_ascii() {
             panic!("Input format not in ascii");
         }
-    
+
         Schematic {
             data: input,
             rows: input.lines().count(),
@@ -28,10 +28,8 @@ impl<'a> Schematic<'a> {
     }
 
     fn get(&self, col: usize, row: usize) -> Option<char> {
-        let x = col.clamp(0, self.cols - 1);
-        let y = row.clamp(0, self.rows - 1);
         let cols = self.cols + if self.carriage_return { 2 } else { 1 };
-        self.as_bytes().get(x + y * cols).map(|b| *b as char)
+        self.as_bytes().get(col + row * cols).map(|b| *b as char)
     }
 
     fn get_part_number(&self, col: usize, row: usize) -> Option<u32> {
@@ -49,8 +47,8 @@ impl<'a> Schematic<'a> {
 
             for dx in -1..=num_len {
                 for dy in -1..=1 {
-                    let x = (col as i32 + dx) as usize;
-                    let y = (row as i32 + dy) as usize;
+                    let x = (col as i32 + dx).clamp(0, self.cols as i32 - 1) as usize;
+                    let y = (row as i32 + dy).clamp(0, self.rows as i32 - 1) as usize;
                     let neighbor = self.get(x, y)?;
 
                     if neighbor != '.' && !neighbor.is_alphanumeric() {
@@ -70,33 +68,34 @@ impl<'a> Schematic<'a> {
     }
 
     fn get_gear_ratio(&self, col: usize, row: usize) -> Option<u32> {
-        let c = self.get(col, row)?;
+        let mut gear_ratio = Vec::new();
 
-        if c == '*' {
+        if self.get(col, row)? == '*' {
             for dx in -1..=1 {
                 for dy in -1..=1 {
-                    let x = (col as i32 + dx) as usize;
-                    let y = (row as i32 + dy) as usize;
-                    let neighbor = self.get(x, y)?;
+                    let x = (col as i32 + dx).clamp(0, self.cols as i32 - 1) as usize;
+                    let y = (row as i32 + dy).clamp(0, self.rows as i32 - 1) as usize;
+                    if self.get(x, y)?.is_ascii_digit() {
 
-                    if neighbor.is_ascii_digit() {
-                        let line = self.lines().nth(row)?;
-                        let mut start = x;
+                        // I might not be at the start of the number
+                        let (p, _) = self.lines().nth(y)?[..=x]
+                                .char_indices()
+                                .rev()
+                                .take_while(|(_, c)| c.is_ascii_digit())
+                                .last()?;
 
-
-                        let (p, _) = if x > col {
-                            line[x..].chars()
-                            .take_while(|c| c.is_ascii_digit())
-                            .enumerate()
-                            .last()?
-                        } else {
-                            line[..=x].chars().rev()
-                            .take_while(|c| c.is_ascii_digit())
-                            .enumerate()
-                            .last()?
-                        };
+                        // I need to only use it only once
+                        if p == x || x as i32 == (col - 1) as i32 {
+                            if let Some(part_number) = self.get_part_number(p, y) {
+                                gear_ratio.push(part_number);
+                            }
+                        }
                     }
                 }
+            }
+
+            if gear_ratio.len() == 2 {
+                return Some(gear_ratio.iter().product());
             }
         }
         None
@@ -129,6 +128,16 @@ fn part1(input: &str) -> Option<u32> {
     Some(total)
 }
 
-fn part2(input: &str) -> Option<()> {
-    todo!()
+fn part2(input: &str) -> u32 {
+    let schematic = Schematic::new(input);
+    let mut total = 0;
+
+    for (row, line) in schematic.lines().enumerate() {
+        for (col, _) in line.char_indices() {
+            if let Some(gear_ratio) = schematic.get_gear_ratio(col, row) {
+                total += gear_ratio;
+            }
+        }
+    }
+    total
 }
