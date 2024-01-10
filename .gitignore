@@ -24,4 +24,5 @@ rust-project.json
 
 # End of https://www.toptal.com/developers/gitignore/api/rust,rust-analyzer
 
+input0.txt
 input1.txt
