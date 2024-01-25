@@ -7,11 +7,22 @@ fn main() {
 }
 
 fn parse_input_line(line: &str) -> Option<Vec<u32>> {
-    Some(line.split(':')
-        .nth(1)?
-        .split_whitespace()
-        .filter_map(|s| s.parse().ok())
-        .collect())
+    Some(
+        line.split(':')
+            .nth(1)?
+            .split_whitespace()
+            .filter_map(|s| s.parse().ok())
+            .collect(),
+    )
+}
+
+fn parse_input_line_part2(line: &str) -> Option<u64> {
+    let data = line.split(':').nth(1)?;
+    let number = data
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>();
+    number.parse().ok()
 }
 
 fn part1(input: &str) -> Option<u32> {
@@ -43,6 +54,29 @@ fn part1(input: &str) -> Option<u32> {
     Some(total)
 }
 
-fn part2(input: &str) -> Option<()> {
-    todo!()
+fn part2(input: &str) -> Option<u64> {
+    let mut lines = input.lines();
+    let record_time = parse_input_line_part2(lines.next()?)?;
+    let record_distance = parse_input_line_part2(lines.next()?)?;
+
+    let mut total = 1;
+    let is_odd = record_time % 2 != 0;
+    let unique_permutations = (record_time as f64 / 2.).floor() as u64;
+
+    let mut count = 0;
+    for velocity in 1..=unique_permutations {
+        let dist_traveled = velocity * (record_time - velocity);
+
+        if dist_traveled > record_distance {
+            if is_odd || velocity != unique_permutations {
+                count += 2;
+            } else {
+                count += 1;
+            }
+        }
+    }
+
+    total *= count;
+
+    Some(total)
 }
