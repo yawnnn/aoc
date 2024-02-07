@@ -1,21 +1,105 @@
-#[derive(Debug, Eq, PartialEq)]
+use std::collections::HashMap;
+
+#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Copy, Clone)]
+enum Card {
+    Digit(char),
+    T,
+    J,
+    Q,
+    K,
+    A,
+}
+
+impl TryFrom<char> for Card {
+    type Error = ();
+
+    fn try_from(c: char) -> Result<Card, Self::Error> {
+        match c {
+            'A' => Ok(Card::A),
+            'K' => Ok(Card::K),
+            'Q' => Ok(Card::Q),
+            'J' => Ok(Card::J),
+            'T' => Ok(Card::T),
+            c if c.is_ascii_digit() => Ok(Card::Digit(c)),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 #[repr(u8)]
 enum Hand {
-    HighCard(char),
-    OnePair(char),
-    TwoPair(char, char),
-    ThreeOfAKind(char),
-    FullHouse(char, char),
-    FourOfAKind(char),
-    FiveOfAKind(char),
+    HighCard(Card),
+    OnePair(Card),
+    TwoPair(Card, Card),
+    ThreeOfAKind(Card),
+    FullHouse(Card, Card),
+    FourOfAKind(Card),
+    FiveOfAKind(Card),
 }
 
 impl Hand {
     fn discriminant(&self) -> u8 {
-        // SAFETY: Because `Self` is marked `repr(u8)`, its layout is a `repr(C)` `union`
-        // between `repr(C)` structs, each of which has the `u8` discriminant as its first
-        // field, so we can read the discriminant without offsetting the pointer.
+        // SAFETY: Because `Self` is marked `repr(u8)`, rust guarantees a specific memory layout.
+        // Most importatly for this, the discriminant is at the beginning
         unsafe { *<*const _>::from(self).cast::<u8>() }
+    }
+
+    fn join(&self, other: &Hand) -> Hand {
+        use Hand::*;
+        let __self = *self;
+        let __other = *other;
+
+        match __self {
+            FiveOfAKind(_) | FourOfAKind(_) | FullHouse(_, _) | TwoPair(_, _) => __self,
+            ThreeOfAKind(c1) => match __other {
+                OnePair(c2) => FullHouse(c1, c2),
+                _ => __self,
+            },
+            OnePair(c1) => match __other {
+                OnePair(c2) => TwoPair(c1, c2),
+                ThreeOfAKind(c2) => FullHouse(c2, c1),
+                _ => __self,
+            },
+            HighCard(_) => match self.cmp(other) {
+                std::cmp::Ordering::Greater => __self,
+                _ => __other,
+            }
+        }
+    }
+}
+
+impl TryFrom<&[Card]> for Hand 
+{
+    type Error = ();
+
+    fn try_from(cards: &[Card]) -> Result<Hand, Self::Error> {
+        use Hand::*;
+        let mut current_best: Option<Hand> = None;
+        let mut occurrences = HashMap::new();
+
+        cards.iter().for_each(|c| {
+            occurrences.entry(c).or_insert(cards.iter().filter(|&c2| c2 == c).count());
+        });
+
+        for (&c, count) in occurrences {
+            let next = match count {
+                5 => FiveOfAKind(c),
+                4 => FourOfAKind(c),
+                3 => ThreeOfAKind(c),
+                2 => OnePair(c),
+                _ => HighCard(c),
+            };
+
+            let new_best = match current_best {
+                Some(best_hand) => best_hand.join(&next),
+                None => next,
+            };
+
+            current_best = Some(new_best);
+        }
+    
+        current_best.ok_or(())
     }
 }
 
@@ -31,29 +115,19 @@ impl PartialOrd for Hand {
     }
 }
 
-#[derive(Debug, Eq, PartialEq, Ord, PartialOrd)]
-enum Card {
-    Digit(char),
-    T,
-    J,
-    Q,
-    K,
-    A,
-}
-
 #[derive(Debug, Eq, PartialEq)]
 struct HandData {
-    hand: Vec<Card>,
-    hand_type: Hand,
+    cards: Vec<Card>,
+    hand: Hand,
     bid: u32,
 }
 
 impl Ord for HandData {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        let hand_type_ord = self.hand_type.cmp(&other.hand_type);
+        let hand_ord = self.hand.cmp(&other.hand);
 
-        match hand_type_ord {
-            std::cmp::Ordering::Equal => self.hand.cmp(&other.hand),
+        match hand_ord {
+            std::cmp::Ordering::Equal => self.cards.cmp(&other.cards),
             other => other,
         }
     }
@@ -71,63 +145,17 @@ fn main() {
     println!("{:?}", part2(input));
 }
 
-fn parse_hand(s: &str) -> Option<Hand> {
-    use Hand::*;
-    let mut best = HighCard(s.chars().next()?);
-
-    for c in s.chars() {
-        let count = s.chars().filter(|&c2| c2 == c).count();
-
-        best = match count {
-            5 => FiveOfAKind(c),
-            4 => FourOfAKind(c),
-            3 => match best {
-                OnePair(c2) if c2 != c => FullHouse(c, c2),
-                _ => ThreeOfAKind(c),
-            },
-            2 => match best {
-                ThreeOfAKind(c2) if c2 != c => FullHouse(c2, c),
-                ThreeOfAKind(_) => best,
-                OnePair(c2) if c2 != c => TwoPair(c, c2),
-                _ => OnePair(c),
-            },
-            _ => match best {
-                HighCard(c2) if c.cmp(&c2) == std::cmp::Ordering::Greater => HighCard(c),
-                _ => best,
-            },
-        };
-
-        match best {
-            FiveOfAKind(_) | FourOfAKind(_) | FullHouse(_, _) | TwoPair(_, _) => break,
-            _ => (),
-        }
-    }
-
-    Some(best)
-}
-
-fn map_card(c: char) -> Option<Card> {
-    match c {
-        'A' => Some(Card::A),
-        'K' => Some(Card::K),
-        'Q' => Some(Card::Q),
-        'J' => Some(Card::J),
-        'T' => Some(Card::T),
-        c if c.is_ascii_digit() => Some(Card::Digit(c)),
-        _ => None,
-    }
-}
-
 fn parse_input_line(line: &str) -> Option<HandData> {
     let mut data = line.split(' ');
     let hand_s = data.next()?;
-    let hand_type = parse_hand(hand_s)?;
+
+    let cards = hand_s.chars().map(|c| c.try_into().ok()).collect::<Option<Vec<_>>>()?;
+    let hand = Hand::try_from(&cards[..]).ok()?;
     let bid = data.next()?.parse().ok()?;
-    let hand = hand_s.chars().map(map_card).collect::<Option<Vec<_>>>()?;
 
     Some(HandData {
+        cards,
         hand,
-        hand_type,
         bid,
     })
 }
