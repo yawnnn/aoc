@@ -31,7 +31,7 @@ fn get_input(session_id: &str, year: u32, day: u32) -> Result<(), String> {
     let input = download_input(session_id, year, day)?;
 
     fs::write(
-        format!("./{year}/day{day}/src/input1.txt"),
+        format!("{}/../{year}/day{day}/src/input1.txt", env::var("CARGO_MANIFEST_DIR").unwrap()),
         input.strip_suffix('\n').unwrap(),
     ).map_err(|e| e.to_string())?;
 
