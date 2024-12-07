@@ -9,8 +9,9 @@ fn request_input(session_id: &str, year: u32, day: u32) -> Result<String, String
     let session_cookie = format!("session={session_id}");
 
     let response = ureq::get(&url)
-    .set("Cookie", &session_cookie)
-    .call().map_err(|e| e.to_string())?;
+        .set("Cookie", &session_cookie)
+        .call()
+        .map_err(|e| e.to_string())?;
 
     if response.status() != 200 {
         return Err(format!(
