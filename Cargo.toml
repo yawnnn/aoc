@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = [ "dwnl_input", "20*/day*", ]
+members = [ "dwld_input", "20*/day*", ]
