@@ -1,3 +1,4 @@
 [workspace]
 resolver = "2"
-members = [ "dwld_input", "20*/day*", ]
+members = [ "dwld_input" ]
+exclude = ["20*"]

@@ -79,7 +79,7 @@ fn get_challenges() -> Option<HashMap<u32, Vec<(PathBuf, u32)>>> {
 }
 
 /// pop first element if present, and `map` it
-fn extract_arg<T>(args: &mut Vec<String>, map: fn(&str) -> T) -> Option<T> {
+fn pop_arg<T>(args: &mut Vec<String>, map: fn(&str) -> T) -> Option<T> {
     match args.first() {
         Some(value) => {
             let extracted = map(value);
@@ -100,9 +100,9 @@ fn main() {
         panic!("cargo run --package=dwnl_input -- session_id [year] [day]");
     }
 
-    let session_id = extract_arg(&mut args, |session_id| session_id.to_owned()).unwrap();
-    let year = extract_arg(&mut args, |year| year.parse::<u32>().unwrap());
-    let day = extract_arg(&mut args, |day| day.parse::<u32>().unwrap());
+    let session_id = pop_arg(&mut args, |session_id| session_id.to_owned()).unwrap();
+    let year = pop_arg(&mut args, |year| year.parse::<u32>().unwrap());
+    let day = pop_arg(&mut args, |day| day.parse::<u32>().unwrap());
 
     let mut challenges = get_challenges().unwrap();
 
