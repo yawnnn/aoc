@@ -1,5 +1,3 @@
-use reqwest::blocking::Client;
-use reqwest::header::COOKIE;
 use std::collections::HashMap;
 use std::env;
 use std::fs;
@@ -10,21 +8,18 @@ fn request_input(session_id: &str, year: u32, day: u32) -> Result<String, String
     let url = format!("https://adventofcode.com/{year}/day/{day}/input");
     let session_cookie = format!("session={session_id}");
 
-    let client = Client::new();
-    let response = client
-        .get(url)
-        .header(COOKIE, session_cookie)
-        .send()
-        .map_err(|e| e.to_string())?;
+    let response = ureq::get(&url)
+    .set("Cookie", &session_cookie)
+    .call().map_err(|e| e.to_string())?;
 
-    if !response.status().is_success() {
+    if response.status() != 200 {
         return Err(format!(
             "Request failed with status: {:?}",
             response.status()
         ));
     }
 
-    response.text().map_err(|e| e.to_string())
+    response.into_string().map_err(|e| e.to_string())
 }
 
 /// get input and write to disk
