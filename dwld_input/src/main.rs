@@ -28,7 +28,7 @@ fn download_input(dir: &Path, session_id: &str, year: u32, day: u32) -> Option<(
     let input = request_input(session_id, year, day).unwrap();
 
     let out_file = dir.join("src").join("input1.txt");
-    fs::write(out_file, input.strip_suffix('\n')?).ok()?;
+    fs::write(out_file, input).unwrap();
 
     Some(())
 }
@@ -116,7 +116,7 @@ fn main() {
                 });
             }
         } else {
-            challenges = HashMap::new();
+            challenges.clear();
         }
     }
 
