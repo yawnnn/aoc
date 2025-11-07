@@ -1,5 +1,3 @@
-use std::fmt;
-
 struct Round(u8);
 
 impl Round {
@@ -141,30 +139,34 @@ fn md5<T: AsRef<[u8]>>(data: T) -> [u8; 16] {
 
     digest
         .iter_mut()
-        .zip(state.iter().flat_map(|&word| u32::from_le(word).to_ne_bytes()))
+        .zip(
+            state
+                .iter()
+                .flat_map(|&word| u32::from_le(word).to_ne_bytes()),
+        )
         .for_each(|(out, byte)| *out = byte);
 
     digest
 }
 
-struct Digest([u8; 16]);
-
-impl fmt::LowerHex for Digest {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        for v in self.0 {
-            write!(f, "{v:02x}")?;
-        }
-        Ok(())
-    }
-}
+//struct Digest([u8; 16]);
+//
+//impl fmt::LowerHex for Digest {
+//    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+//        for v in self.0 {
+//            write!(f, "{v:02x}")?;
+//        }
+//        Ok(())
+//    }
+//}
 
 fn part1(input: &str) -> Option<u64> {
     for n in 0..=u64::MAX {
         let data = format!("{}{}", input, n);
         let digest = md5(data);
 
-        //if digest[0..2] == [0; 2] && digest[2] < 0x10 {
-        if format!("{:02x}", Digest(digest)).starts_with("00000") {
+        //if format!("{:02x}", Digest(digest)).starts_with("00000") {
+        if digest[0..2] == [0; 2] && digest[2] < 0x10 {
             return Some(n);
         }
     }
@@ -176,11 +178,12 @@ fn part2(input: &str) -> Option<u64> {
         let data = format!("{}{}", input, n);
         let digest = md5(data);
 
-        if digest[0..3] == [0; 3] {
         //if format!("{:x}", Digest(digest)).starts_with("000000") {
+        if digest[0..3] == [0; 3] {
             return Some(n);
         }
     }
+
     None
 }
 

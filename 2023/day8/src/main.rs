@@ -84,7 +84,13 @@ fn part2(input: &str) -> Option<u64> {
 
     let mut curr = nodes
         .iter()
-        .filter_map(|(&k, node)| if k.ends_with('A') { Some((node, 0)) } else { None })
+        .filter_map(|(&k, node)| {
+            if k.ends_with('A') {
+                Some((node, 0))
+            } else {
+                None
+            }
+        })
         .collect::<Vec<_>>();
     let mut count = 0;
 
@@ -107,9 +113,7 @@ fn part2(input: &str) -> Option<u64> {
         }
     }
 
-    let lcm = curr.iter().fold(1, |acc, &(_, steps)| {
-        lcm(acc, steps)
-    });
+    let lcm = curr.iter().fold(1, |acc, &(_, steps)| lcm(acc, steps));
 
     Some(lcm)
 }

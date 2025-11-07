@@ -1,52 +1,49 @@
-struct Shape3D {
+use std::{cmp, iter, str};
+
+struct Cuboid {
     l: u32,
     w: u32,
     h: u32,
 }
 
 #[allow(dead_code)]
-enum Rect3DSide {
-    Front, Back,
-    Up, Down,
-    Left, Right
+enum CuboidSide {
+    Front,
+    Back,
+    Up,
+    Down,
+    Left,
+    Right,
 }
 
-trait Rect3DSurface {
-    fn surface_side(&self, side: Rect3DSide) -> u32;
-    fn surface(&self) -> u32;
-}
-
-impl Rect3DSurface for Shape3D {
-    fn surface_side(&self, side: Rect3DSide) -> u32 {
-        use Rect3DSide::*;
+impl Cuboid {
+    fn side_surface(&self, side: CuboidSide) -> u32 {
+        use CuboidSide as S;
         match side {
-            Front | Back => self.l * self.h,
-            Up | Down => self.l * self.w,
-            Left | Right => self.w * self.h,
+            S::Front | S::Back => self.l * self.h,
+            S::Up | S::Down => self.l * self.w,
+            S::Left | S::Right => self.w * self.h,
         }
     }
-    
-    fn surface(&self) -> u32 {
-        use Rect3DSide::*;
-        2 * (self.surface_side(Front) + self.surface_side(Up) + self.surface_side(Left))
-    }
 }
 
-impl std::str::FromStr for Shape3D {
+impl str::FromStr for Cuboid {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut r = Shape3D { l: 0, w: 0, h: 0 };
-        let box_dims = [&mut r.l, &mut r.w, &mut r.h];
+        let mut c = Cuboid { l: 0, w: 0, h: 0 };
+        let dims = [&mut c.l, &mut c.w, &mut c.h];
 
-        let input_dims: Vec<_> = s.split('x').collect();
-        if input_dims.len() == 3 {
-            for (val, s) in std::iter::zip(box_dims, input_dims) {
-                *val = s.parse().map_err(|_| ())?;
-            }
-            return Ok(r);
+        let str_dims: Vec<_> = s.split('x').collect();
+        if str_dims.len() != dims.len() {
+            return Err(());
         }
-        Err(())
+
+        for (dim, s) in iter::zip(dims, str_dims) {
+            *dim = s.parse().map_err(|_| ())?;
+        }
+        
+        Ok(c)
     }
 }
 
@@ -57,23 +54,18 @@ fn main() {
 }
 
 fn part1(s: &str) -> Option<u32> {
-    // let boxes: Vec<_> = s
-    //     .lines()
-    //     .filter_map(|s| Shape3D::from_str(s).ok())
-    //     .collect();
-    let boxes = s
+    let cuboids = s
         .lines()
-        .map(std::str::FromStr::from_str)
-        .collect::<Result<Vec<Shape3D>, _>>();
-
-    let boxes = boxes.ok()?;
+        .map(str::FromStr::from_str)
+        .collect::<Result<Vec<Cuboid>, _>>()
+        .ok()?;
     let mut total = 0;
 
-    for r in boxes {
-        let s1 = r.surface_side(Rect3DSide::Front);
-        let s2 = r.surface_side(Rect3DSide::Up);
-        let s3 = r.surface_side(Rect3DSide::Left);
-        let min = std::cmp::min(std::cmp::min(s1, s2), s3);
+    for c in cuboids {
+        let s1 = c.side_surface(CuboidSide::Front);
+        let s2 = c.side_surface(CuboidSide::Up);
+        let s3 = c.side_surface(CuboidSide::Left);
+        let min = cmp::min(cmp::min(s1, s2), s3);
         total += 2 * (s1 + s2 + s3) + min
     }
 
@@ -81,19 +73,17 @@ fn part1(s: &str) -> Option<u32> {
 }
 
 fn part2(s: &str) -> Option<u32> {
-    let boxes = s
+    let cuboids = s
         .lines()
         .map(std::str::FromStr::from_str)
-        .collect::<Result<Vec<Shape3D>, _>>();
-
-    let boxes = boxes.ok()?;
+        .collect::<Result<Vec<Cuboid>, _>>()
+        .ok()?;
     let mut total = 0;
 
-    for r in boxes {
-        let mut dims = [ r.l, r.w, r.h ];
+    for r in cuboids {
+        let mut dims = [r.l, r.w, r.h];
         dims.sort_unstable();
         let length = 2 * dims[0] + 2 * dims[1];
-        //let bow = dims[0] * dims[1] * dims[2];
         let bow = dims.iter().product::<u32>();
         total += length + bow;
     }

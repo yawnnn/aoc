@@ -54,12 +54,17 @@ fn part2(input: &str) -> Option<u32> {
                 let after_num = draw.find(' ')?;
                 let num = draw[..after_num].parse::<u32>().ok()?;
 
-                cube_nums.entry(&draw[after_num + 1..])
-                    .and_modify(|v| if *v < num { *v = num })
+                cube_nums
+                    .entry(&draw[after_num + 1..])
+                    .and_modify(|v| {
+                        if *v < num {
+                            *v = num
+                        }
+                    })
                     .or_insert(num);
             }
         }
-        
+
         total += cube_nums.values().product::<u32>();
     }
     Some(total)

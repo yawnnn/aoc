@@ -57,7 +57,9 @@ impl<'a> Schematic<'a> {
                     }
                 }
 
-                if ok { break; }
+                if ok {
+                    break;
+                }
             }
 
             if ok {
@@ -76,13 +78,12 @@ impl<'a> Schematic<'a> {
                     let x = (col as i32 + dx).clamp(0, self.cols as i32 - 1) as usize;
                     let y = (row as i32 + dy).clamp(0, self.rows as i32 - 1) as usize;
                     if self.get(x, y)?.is_ascii_digit() {
-
                         // I might not be at the start of the number
                         let (p, _) = self.lines().nth(y)?[..=x]
-                                .char_indices()
-                                .rev()
-                                .take_while(|(_, c)| c.is_ascii_digit())
-                                .last()?;
+                            .char_indices()
+                            .rev()
+                            .take_while(|(_, c)| c.is_ascii_digit())
+                            .last()?;
 
                         // I need to only use it only once
                         if p == x || x as i32 == (col - 1) as i32 {
