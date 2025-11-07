@@ -1,4 +1,4 @@
 [workspace]
 resolver = "2"
-members = [ "dwld_input" ]
+members = [ "get_inputs" ]
 exclude = ["20*"]

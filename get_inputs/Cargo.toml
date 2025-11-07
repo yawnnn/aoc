@@ -1,5 +1,5 @@
 [package]
-name = "dwld_input"
+name = "get_inputs"
 version = "0.1.0"
 edition = "2021"
 
