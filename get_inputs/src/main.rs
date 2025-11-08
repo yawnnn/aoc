@@ -2,36 +2,33 @@ use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process;
 
-/// get input for `year` and `day` from the web
-fn wgets(session_id: &str, year: u32, day: u32) -> String {
+fn wget(rootdir: &Path, year: u32, day: u32, session_id: &str) {
     let url = format!("https://adventofcode.com/{year}/day/{day}/input");
-    let session_cookie = format!("session={session_id}");
+    let header = format!("--header=Cookie: session={session_id}");
+    let outpath = rootdir
+        .join("src")
+        .join("input1.txt")
+        .to_str()
+        .unwrap()
+        .to_string();
+    let output = format!("--output-document={outpath}");
 
-    let response = ureq::get(&url)
-        .set("Cookie", &session_cookie)
-        .call()
-        .map_err(|e| e.to_string())
+    let _proc = process::Command::new("wget")
+        .arg(&header)
+        .arg(&output)
+        .arg(&url)
+        .output()
         .unwrap();
 
-    if response.status() != 200 {
-        panic!(
-            "Request failed with status {}: {:?}",
-            response.status(),
-            response.into_string()
-        );
-    }
+    // println!("wget {header} {output} {url}");
+    // let stdout = String::from_utf8(proc.stdout).unwrap();
+    // let stderr = String::from_utf8(proc.stderr).unwrap();
+    // println!("stdout: \n{stdout}\n");
+    // println!("stderr: \n{stderr}\n");
 
-    response.into_string().unwrap()
-}
-
-/// get input and write to disk
-fn get_input(dir: &Path, session_id: &str, year: u32, day: u32) {
-    let contents = wgets(session_id, year, day);
-    let outpath = dir.join("src").join("input1.txt");
-    fs::write(outpath, contents).unwrap();
-
-    println!("Yoinked year {year} day {day}");
+    println!("Downloaded year {year} day {day} in {outpath}");
 }
 
 /// get folders in `path`
@@ -117,7 +114,7 @@ fn main() {
 
     for (year, days) in challenges {
         for (dir, day) in days {
-            get_input(&dir, &session_id, year, day);
+            wget(&dir, year, day, &session_id);
         }
     }
 }

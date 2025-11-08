@@ -2,6 +2,3 @@
 name = "get_inputs"
 version = "0.1.0"
 edition = "2021"
-
-[dependencies]
-ureq = "2.12.1"
